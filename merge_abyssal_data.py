@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import json
 
 def main():
     base_dir = 'Abyssal_World'
@@ -15,7 +14,6 @@ def main():
     df_cells = pd.read_csv(cells_path)
     print(f"Base shape: {df_cells.shape}")
 
-    # Map filename to column prefix
     csv_files = {
         'corals.csv': 'coral',
         'currents.csv': 'current',
@@ -32,93 +30,82 @@ def main():
             continue
 
         print(f"Processing {filename}...")
-        try:
-            df_other = pd.read_csv(filepath)
-        except Exception as e:
-            print(f"Error reading {filename}: {e}")
-            continue
+        df_other = pd.read_csv(filepath)
 
-        # Rename columns to avoid collisions, excluding join keys
-        # We prefix all columns except 'row' and 'col'
+        # Rename columns excluding keys
         cols_to_rename = {c: f"{prefix}_{c}" for c in df_other.columns if c not in ['row', 'col']}
         df_other.rename(columns=cols_to_rename, inplace=True)
-
-        # Special handling for life.csv prey_species to parse "A, B" strings into lists
+        
+        # Special handling for life.csv prey parsing (internal cleanup only)
+        # We want the merged result to be a list of the raw strings
         if filename == 'life.csv':
             prey_col = f"{prefix}_prey_species"
             if prey_col in df_other.columns:
-                # Function to parse prey_species
-                def parse_prey(x):
-                    if pd.isna(x) or x == '':
-                        return []
-                    if isinstance(x, str):
-                        # Split by comma, strip whitespace, and remove empty strings
-                        return [s.strip() for s in x.split(',') if s.strip()]
-                    return [x]
-                
-                df_other[prey_col] = df_other[prey_col].apply(parse_prey)
+                # Normalize empty values to empty string
+                df_other[prey_col] = df_other[prey_col].fillna('')
 
-        # Check for duplicates on (row, col)
+        # Aggregate duplicates
         if df_other.duplicated(subset=['row', 'col']).any():
             print(f"  Found duplicate entries for (row, col) in {filename}. Aggregating...")
-            # Aggregate all value columns into lists
-            # We select columns that are NOT row/col for aggregation
+            
             value_cols = [c for c in df_other.columns if c not in ['row', 'col']]
             
-            # Group by row, col and aggregate
-            df_other = df_other.groupby(['row', 'col'])[value_cols].agg(lambda x: list(x)).reset_index()
+            # Group by cell and aggregate into lists
+            # This preserves index alignment:
+            # life_species[0] corresponds to life_prey_species[0]
+            df_agg = df_other.groupby(['row', 'col'])[value_cols].agg(list).reset_index()
+            
+            # Cleanup completely empty prey lists for life.csv
+            if filename == 'life.csv':
+                prey_col = f"{prefix}_prey_species"
+                if prey_col in df_agg.columns:
+                    def clean_prey(lst):
+                        # If list contains only empty strings (no prey for any species in cell), return None (BLANK)
+                        if isinstance(lst, list) and all(x == '' for x in lst):
+                            return None
+                        return lst
+                    df_agg[prey_col] = df_agg[prey_col].apply(clean_prey)
+
+            df_other = df_agg
             print(f"  Aggregated shape: {df_other.shape}")
 
         # Merge
         df_cells = pd.merge(df_cells, df_other, on=['row', 'col'], how='left')
         print(f"  Merged. Current shape: {df_cells.shape}")
 
-    # Process food_web.csv (special case: merge on biome)
+    # Food web processing
     food_web_path = os.path.join(base_dir, 'food_web.csv')
     if os.path.exists(food_web_path):
         print("Processing food_web.csv...")
         try:
             df_food = pd.read_csv(food_web_path)
-            # Columns: predator, prey, interaction_strength, biome_overlap
-            # We want to aggregate by 'biome_overlap' (which maps to 'biome' in cells)
-            
-            # Rename biome_overlap to match logic, or just keep as key
             group_col = 'biome_overlap'
             
             if group_col in df_food.columns:
-                # Aggregate into lists
                 df_food_agg = df_food.groupby(group_col).agg({
                     'predator': list,
                     'prey': list,
                     'interaction_strength': list
                 }).reset_index()
                 
-                # Rename columns for the merge
                 df_food_agg.rename(columns={
                     'predator': 'biome_predators',
                     'prey': 'biome_prey',
                     'interaction_strength': 'biome_interaction_strengths'
                 }, inplace=True)
                 
-                # Merge with cells on cells.biome == food_web.biome_overlap
                 df_cells = pd.merge(df_cells, df_food_agg, left_on='biome', right_on=group_col, how='left')
                 
-                # Drop the extra key column from the right side if it exists
                 if group_col in df_cells.columns:
                     df_cells.drop(columns=[group_col], inplace=True)
                     
                 print(f"  Merged food_web. Current shape: {df_cells.shape}")
-            else:
-                print(f"  Warning: {group_col} column not found in food_web.csv")
-                
         except Exception as e:
-            print(f"Error processing food_web.csv: {e}")
+            print(f"Error processing food_web: {e}")
 
-    # Save result
     print(f"Saving merged data to {merged_path}...")
     df_cells.to_csv(merged_path, index=False)
     print("Done.")
 
 if __name__ == "__main__":
     main()
-

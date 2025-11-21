@@ -120,16 +120,16 @@ row,col,species,avg_depth_m,density,threat_level,behavior,trophic_level,prey_spe
 1,46,Abyssal_Ray,4309,0.73,2,roaming,2,
 45,33,Abyssal_Ray,7668,0.324,2,roaming,2,
 17,37,Abyssal_Ray,2673,0.59,2,roaming,2,
-42,44,Crimson_Jelly,4741,0.161,3,swarm,3,"Glass_Squid, Blue_Siphonophore"
-41,42,Crimson_Jelly,7888,0.327,3,swarm,3,"Glass_Squid, Blue_Siphonophore"
-37,44,Crimson_Jelly,7362,0.321,3,swarm,3,"Glass_Squid, Blue_Siphonophore"
-41,43,Crimson_Jelly,7487,0.05,3,swarm,3,"Glass_Squid, Blue_Siphonophore"
-40,42,Crimson_Jelly,8128,0.444,3,swarm,3,"Glass_Squid, Blue_Siphonophore"
-41,23,Giant_Isopod,4953,0.216,3,scavenger,3,"Abyssal_Plant, Biogenic_Sediment"
-6,7,Giant_Isopod,1678,0.05,3,scavenger,3,"Abyssal_Plant, Biogenic_Sediment"
-5,9,Giant_Isopod,1107,0.326,3,scavenger,3,"Abyssal_Plant, Biogenic_Sediment"
-4,6,Giant_Isopod,1137,0.244,3,scavenger,3,"Abyssal_Plant, Biogenic_Sediment"
-6,0,Giant_Isopod,1490,0.327,3,scavenger,3,"Abyssal_Plant, Biogenic_Sediment"
+42,44,Crimson_Jelly,4741,0.161,3,swarm,3,Glass_Squid;Blue_Siphonophore
+41,42,Crimson_Jelly,7888,0.327,3,swarm,3,Glass_Squid;Blue_Siphonophore
+37,44,Crimson_Jelly,7362,0.321,3,swarm,3,Glass_Squid;Blue_Siphonophore
+41,43,Crimson_Jelly,7487,0.05,3,swarm,3,Glass_Squid;Blue_Siphonophore
+40,42,Crimson_Jelly,8128,0.444,3,swarm,3,Glass_Squid;Blue_Siphonophore
+41,23,Giant_Isopod,4953,0.216,3,scavenger,3,Abyssal_Plant;Biogenic_Sediment
+6,7,Giant_Isopod,1678,0.05,3,scavenger,3,Abyssal_Plant;Biogenic_Sediment
+5,9,Giant_Isopod,1107,0.326,3,scavenger,3,Abyssal_Plant;Biogenic_Sediment
+4,6,Giant_Isopod,1137,0.244,3,scavenger,3,Abyssal_Plant;Biogenic_Sediment
+6,0,Giant_Isopod,1490,0.327,3,scavenger,3,Abyssal_Plant;Biogenic_Sediment
 6,8,Blue_Siphonophore,645,0.523,2,drifter,2,
 5,7,Blue_Siphonophore,826,0.423,2,drifter,2,
 15,11,Glass_Squid,2268,0.694,2,roaming,2,
@@ -170,11 +170,11 @@ row,col,species,avg_depth_m,density,threat_level,behavior,trophic_level,prey_spe
 26,11,Hydro_Vent_Shrimp,3874,0.669,2,swarm,2,Abyssal_Plant
 27,12,Hydro_Vent_Shrimp,2160,0.518,2,swarm,2,Abyssal_Plant
 26,13,Hydro_Vent_Shrimp,2179,0.405,2,swarm,2,Abyssal_Plant
-41,42,Specter_Whale,4083,0.261,3,roaming,3,"Abyssal_Ray, Glass_Squid"
-37,44,Specter_Whale,4782,0.14,3,roaming,3,"Abyssal_Ray, Glass_Squid"
-42,44,Specter_Whale,6572,0.287,3,roaming,3,"Abyssal_Ray, Glass_Squid"
-40,42,Specter_Whale,4205,0.471,3,roaming,3,"Abyssal_Ray, Glass_Squid"
-41,43,Specter_Whale,6002,0.05,3,roaming,3,"Abyssal_Ray, Glass_Squid"
+41,42,Specter_Whale,4083,0.261,3,roaming,3,Abyssal_Ray;Glass_Squid
+37,44,Specter_Whale,4782,0.14,3,roaming,3,Abyssal_Ray;Glass_Squid
+42,44,Specter_Whale,6572,0.287,3,roaming,3,Abyssal_Ray;Glass_Squid
+40,42,Specter_Whale,4205,0.471,3,roaming,3,Abyssal_Ray;Glass_Squid
+41,43,Specter_Whale,6002,0.05,3,roaming,3,Abyssal_Ray;Glass_Squid
 5,44,Abyssal_Plant,3377,0.515,1,stationary,1,
 36,33,Abyssal_Plant,5368,0.32,1,stationary,1,
 38,29,Abyssal_Plant,4286,0.324,1,stationary,1,
