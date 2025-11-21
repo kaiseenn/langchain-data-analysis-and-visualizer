@@ -1,11 +1,26 @@
 import csv
 import ast
+import json
+import os
 
 class AbyssalOptimizer:
     def __init__(self, filepath='merged.csv'):
         self.filepath = filepath
         self.data = []
         self.scored_data = []
+        self.iucn_status = {}
+        self._load_iucn_status()
+
+    def _load_iucn_status(self):
+        """Loads IUCN status map from json."""
+        try:
+            # Assuming iucn_status.json is in the same directory as this file (app/)
+            status_path = os.path.join(os.path.dirname(__file__), 'iucn_status.json')
+            with open(status_path, 'r') as f:
+                self.iucn_status = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not load IUCN status: {e}")
+            self.iucn_status = {}
 
     def load_data(self):
         """Loads the dataset using standard csv module."""
@@ -108,6 +123,10 @@ class AbyssalOptimizer:
             hazards = self._safe_eval(row.get('hazard_type', '[]'))
             resources = self._safe_eval(row.get('resource_type', '[]'))
             life = self._safe_eval(row.get('life_species', '[]'))
+            
+            # Map life species to IUCN status
+            # We'll pass a parallel list of status codes (e.g. ['EN', 'LC'])
+            life_iucn = [self.iucn_status.get(species, 'DD') for species in life]
 
             self.scored_data.append({
                 'row': int(row['row']),
@@ -129,14 +148,14 @@ class AbyssalOptimizer:
                 # Lists for UI
                 'hazards': hazards,
                 'resources': resources,
-                'life': life
+                'life': life,
+                'life_iucn': life_iucn,
+                
+                # Preserve full raw data for generic view if needed, but filtered for clarity
+                # Actually, let's not duplicate everything, the fields above are sufficient for now
             })
             
         # Normalize scores for heatmap (0-1 range if needed, but raw score is fine for now)
-        # Let's sort by score just in case, though grid order is usually preferred for maps
-        # We won't sort here to keep grid order if possible, but DeckGL handles points so order doesn't matter much.
-        # Sorting helps if we want to return "Top N"
         self.scored_data.sort(key=lambda x: x['score'], reverse=True)
         
         return self.scored_data
-

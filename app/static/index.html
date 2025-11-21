@@ -142,12 +142,65 @@
             background: rgba(100, 255, 218, 0.1);
         }
 
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            background: rgba(100, 255, 218, 0.1);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+        }
+
+        .tag.hazard {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--hazard-red);
+            border-color: var(--hazard-red);
+        }
+        
+        .tag.life {
+            background: rgba(100, 200, 100, 0.1);
+            color: #64ff8f;
+            border-color: #64ff8f;
+        }
+
         .controls {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid var(--text-secondary);
         }
         
+        .toggle-group {
+            margin-bottom: 15px;
+        }
+        
+        .toggle-btn {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .toggle-btn.active {
+            background: var(--accent-cyan);
+            color: var(--deep-blue);
+        }
+        
+        .toggle-btn:first-child {
+            border-radius: 4px 0 0 4px;
+            border-right: none;
+        }
+        
+        .toggle-btn:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
         .instruction {
             font-size: 0.8rem;
             color: var(--text-secondary);
@@ -160,6 +213,11 @@
 
     <div id="sidebar">
         <h1>Abyssal 3D View</h1>
+        
+        <div class="toggle-group">
+            <button class="toggle-btn active" id="btn-biome">Biome View</button>
+            <button class="toggle-btn" id="btn-score">Mining Score</button>
+        </div>
         
         <div class="search-form">
             <input type="number" id="row-input" class="search-input" placeholder="Row" min="0" max="49">
