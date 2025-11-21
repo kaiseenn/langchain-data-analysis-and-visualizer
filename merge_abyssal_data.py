@@ -43,6 +43,21 @@ def main():
         cols_to_rename = {c: f"{prefix}_{c}" for c in df_other.columns if c not in ['row', 'col']}
         df_other.rename(columns=cols_to_rename, inplace=True)
 
+        # Special handling for life.csv prey_species to parse "A, B" strings into lists
+        if filename == 'life.csv':
+            prey_col = f"{prefix}_prey_species"
+            if prey_col in df_other.columns:
+                # Function to parse prey_species
+                def parse_prey(x):
+                    if pd.isna(x) or x == '':
+                        return []
+                    if isinstance(x, str):
+                        # Split by comma, strip whitespace, and remove empty strings
+                        return [s.strip() for s in x.split(',') if s.strip()]
+                    return [x]
+                
+                df_other[prey_col] = df_other[prey_col].apply(parse_prey)
+
         # Check for duplicates on (row, col)
         if df_other.duplicated(subset=['row', 'col']).any():
             print(f"  Found duplicate entries for (row, col) in {filename}. Aggregating...")
