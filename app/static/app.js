@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const lightingEffect = new LightingEffect({ambientLight, pointLight});
 
+    let deckglInstance = null; // Store instance to update layers/camera
+    let allData = []; // Store loaded data
+
     // --- Data Fetching ---
     fetch('/api/grid')
         .then(response => response.json())
@@ -40,21 +43,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(data.error);
                 return;
             }
-            initDeckGL(data);
+            allData = data.map(d => ({
+                ...d,
+                // Inverted depth: Shallow (Seamount) = Tall, Deep (Trench) = Short
+                elevation: (MAX_DEPTH - d.depth)
+            }));
+            initDeckGL(allData);
+            setupSearch();
         })
         .catch(err => console.error('Error fetching grid:', err));
 
-    function initDeckGL(data) {
-        // Process data for Deck.gl
-        // We calculate 'elevation' here so we don't do it every frame
-        const processedData = data.map(d => ({
-            ...d,
-            // Inverted depth: Shallow (Seamount) = Tall, Deep (Trench) = Short
-            // We shift it so the deepest point is at 0 (or close to it)
-            elevation: (MAX_DEPTH - d.depth)
-        }));
-
-        const deckgl = new DeckGL({
+    function initDeckGL(processedData) {
+        deckglInstance = new DeckGL({
             container: 'map-container',
             mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', // MapLibre style
             initialViewState: {
@@ -66,41 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             controller: true,
             effects: [lightingEffect],
-            layers: [
-                new ColumnLayer({
-                    id: 'grid-cell-layer',
-                    data: processedData,
-                    diskResolution: 4, // 4 vertices = Square column
-                    radius: 500,       // 1km grid -> 500m radius (touches edges roughly)
-                    extruded: true,
-                    pickable: true,
-                    elevationScale: Z_SCALE,
-                    getPosition: d => [d.lon, d.lat],
-                    getFillColor: d => biomeColors[d.biome] || biomeColors['unknown'],
-                    getElevation: d => d.elevation,
-                    getLineColor: [0, 0, 0],
-                    getLineWidth: 0,
-                    lineWidthMinPixels: 0,
-                    // Interactive props
-                    autoHighlight: true,
-                    highlightColor: [100, 255, 218, 128],
-                    
-                    onHover: ({object}) => {
-                        if (!selectedCell && object) {
-                            updateSidebar(object);
-                        }
-                    },
-                    onClick: ({object}) => {
-                        if (object) {
-                            selectedCell = object;
-                            updateSidebar(object);
-                        } else {
-                            selectedCell = null;
-                            infoDiv.innerHTML = '<p class="stat-label">Hover over a cell to view details.</p>';
-                        }
-                    }
-                })
-            ],
+            layers: [renderLayer(processedData)],
             getTooltip: ({object}) => object && {
                 html: `
                     <div><b>${object.biome.toUpperCase()}</b></div>
@@ -116,52 +82,145 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateSidebar(cell) {
-        // Format tags
-        const resourceTags = cell.resources.length > 0 
-            ? cell.resources.map(r => `<span class="tag">${r}</span>`).join('')
-            : '<span class="stat-label">None</span>';
+    function renderLayer(data) {
+        return new ColumnLayer({
+            id: 'grid-cell-layer',
+            data: data,
+            diskResolution: 4, 
+            radius: 500,       
+            extruded: true,
+            pickable: true,
+            elevationScale: Z_SCALE,
+            getPosition: d => [d.lon, d.lat],
+            getFillColor: d => {
+                 // If a cell is selected...
+                 if (selectedCell) {
+                     // If it IS the selected cell, paint it GOLD
+                     if (d.row === selectedCell.row && d.col === selectedCell.col) {
+                         return [255, 215, 0, 255]; // Opaque Gold
+                     }
+                     // If it is NOT the selected cell, dim it
+                     const c = biomeColors[d.biome] || biomeColors['unknown'];
+                     return [c[0], c[1], c[2], 50]; // More transparent
+                 }
+                 // Default state (no selection)
+                 return biomeColors[d.biome] || biomeColors['unknown'];
+            },
+            getElevation: d => d.elevation,
+            getLineColor: d => (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) ? [255, 215, 0] : [0, 0, 0],
+            getLineWidth: d => (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) ? 20 : 0,
+            lineWidthMinPixels: 0,
             
-        const hazardTags = cell.hazards.length > 0 
-            ? cell.hazards.map(h => `<span class="tag hazard">${h}</span>`).join('')
-            : '<span class="stat-label">Safe</span>';
+            // Update triggers re-evaluates accessors when variables change
+            updateTriggers: {
+                getFillColor: [selectedCell],
+                getLineWidth: [selectedCell]
+            },
 
-        const lifeTags = cell.life.length > 0 
-            ? cell.life.map(l => `<span class="tag life">${l}</span>`).join('')
-            : '<span class="stat-label">None</span>';
+            // Interactive props
+            autoHighlight: true,
+            highlightColor: [100, 255, 218, 128],
+            
+            onHover: ({object}) => {
+                if (!selectedCell && object) {
+                    updateSidebar(object);
+                }
+            },
+            onClick: ({object}) => {
+                if (object) {
+                    selectTile(object);
+                } else {
+                    deselectTile();
+                }
+            }
+        });
+    }
+    
+    function selectTile(cell) {
+        selectedCell = cell;
+        updateSidebar(cell);
+        
+        // Force full layer update to trigger getFillColor and getLineWidth re-evaluation
+        // by creating a fresh layer instance with the new selectedCell state
+        deckglInstance.setProps({
+            layers: [renderLayer(allData)]
+        });
+    }
+
+    function deselectTile() {
+        selectedCell = null;
+        infoDiv.innerHTML = '<p class="stat-label">Hover over a cell to view details.</p>';
+        
+        // Reset layer
+        deckglInstance.setProps({
+            layers: [renderLayer(allData)]
+        });
+    }
+
+    function setupSearch() {
+        const btn = document.getElementById('search-btn');
+        const rowInput = document.getElementById('row-input');
+        const colInput = document.getElementById('col-input');
+
+        const doSearch = () => {
+            const r = parseInt(rowInput.value);
+            const c = parseInt(colInput.value);
+            
+            if (isNaN(r) || isNaN(c)) return;
+
+            const found = allData.find(d => d.row === r && d.col === c);
+            if (found) {
+                // Just select it, do NOT move camera
+                selectTile(found);
+            } else {
+                alert('Cell not found within grid range.');
+            }
+        };
+
+        btn.addEventListener('click', doSearch);
+    }
+
+    function updateSidebar(cell) {
+        const d = cell.full_data;
+
+        // Helper to format values
+        const formatVal = (key, val) => {
+            if (Array.isArray(val)) {
+                return val.length > 0 ? val.join(', ') : 'None';
+            }
+            if (typeof val === 'number') {
+                if (key.includes('lat') || key.includes('lon')) return val.toFixed(4);
+                if (key.includes('depth') || key.includes('pressure') || key.includes('temp')) return val.toFixed(2);
+                return val;
+            }
+            return val;
+        };
+
+        let listItems = '';
+        const keys = Object.keys(d).sort();
+        
+        for (const key of keys) {
+            const val = d[key];
+            if (Array.isArray(val) && val.length === 0) continue;
+            
+            listItems += `
+                <div class="stat-row">
+                    <span class="stat-label" title="${key}">${key}</span>
+                    <span class="stat-value" style="text-align: right; max-width: 180px; overflow-wrap: break-word;">
+                        ${formatVal(key, val)}
+                    </span>
+                </div>
+            `;
+        }
 
         infoDiv.innerHTML = `
             <div class="stat-box">
-                <div class="stat-row">
-                    <span class="stat-label">Coordinates</span>
-                    <span class="stat-value">(${cell.row}, ${cell.col})</span>
+                 <div class="stat-row" style="border-bottom: 1px solid #8892b0; margin-bottom: 10px; padding-bottom: 5px;">
+                    <span class="stat-label"><strong>Column</strong></span>
+                    <span class="stat-value"><strong>Value</strong></span>
                 </div>
-                <div class="stat-row">
-                    <span class="stat-label">Biome</span>
-                    <span class="stat-value" style="color: rgb(${biomeColors[cell.biome]?.join(',') || '136,136,136'})">${cell.biome.toUpperCase()}</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Depth</span>
-                    <span class="stat-value">${cell.depth.toFixed(1)} m</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Pressure</span>
-                    <span class="stat-value">${cell.pressure.toFixed(1)} atm</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">Temp</span>
-                    <span class="stat-value">${cell.temp.toFixed(1)} °C</span>
-                </div>
+                ${listItems}
             </div>
-
-            <h2>Resources</h2>
-            <div style="margin-bottom: 15px;">${resourceTags}</div>
-
-            <h2>Hazards</h2>
-            <div style="margin-bottom: 15px;">${hazardTags}</div>
-
-            <h2>Life Forms</h2>
-            <div>${lifeTags}</div>
         `;
     }
 });

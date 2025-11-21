@@ -105,31 +105,43 @@
             font-weight: 600;
             color: var(--text-primary);
         }
+        
+        /* Search Form */
+        .search-form {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--text-secondary);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
 
-        .tag {
-            display: inline-block;
-            padding: 4px 8px;
+        .search-input {
+            background: rgba(10, 25, 47, 0.5);
+            border: 1px solid var(--text-secondary);
+            color: var(--text-primary);
+            padding: 8px;
             border-radius: 4px;
-            font-size: 0.8rem;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            background: rgba(100, 255, 218, 0.1);
+            width: 60px;
+            font-family: inherit;
+        }
+
+        .search-btn {
+            background: transparent;
             color: var(--accent-cyan);
             border: 1px solid var(--accent-cyan);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            font-weight: 600;
         }
 
-        .tag.hazard {
-            background: rgba(255, 107, 107, 0.1);
-            color: var(--hazard-red);
-            border-color: var(--hazard-red);
+        .search-btn:hover {
+            background: rgba(100, 255, 218, 0.1);
         }
-        
-        .tag.life {
-            background: rgba(100, 200, 100, 0.1);
-            color: #64ff8f;
-            border-color: #64ff8f;
-        }
-        
+
         .controls {
             margin-top: 20px;
             padding-top: 20px;
@@ -148,6 +160,13 @@
 
     <div id="sidebar">
         <h1>Abyssal 3D View</h1>
+        
+        <div class="search-form">
+            <input type="number" id="row-input" class="search-input" placeholder="Row" min="0" max="49">
+            <input type="number" id="col-input" class="search-input" placeholder="Col" min="0" max="49">
+            <button id="search-btn" class="search-btn">Go</button>
+        </div>
+
         <div id="cell-info">
             <p class="stat-label">Hover over a cell to view details.</p>
             <p class="stat-label">Click to lock details in sidebar.</p>
