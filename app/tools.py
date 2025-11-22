@@ -45,27 +45,47 @@ class HighlightTilesInput(BaseModel):
 def highlight_tiles(tiles: List[Dict[str, int]]):
     """
     Call this tool to highlight specific tiles on the user's map.
-    Input should be a list of dictionaries, each with 'row' and 'col' keys.
+    Input should be a list of dictionaries, each with BOTH 'row' AND 'col' keys.
     Example: [{'row': 10, 'col': 5}, {'row': 2, 'col': 3}]
+    
+    IMPORTANT: Each tile MUST have both 'row' and 'col' keys, otherwise it will highlight incorrectly.
     """
-    # Return the tiles as a string repr so the agent loop can capture it in the ToolMessage
-    return str(tiles)
+    # Validate that each tile has both row and col
+    validated_tiles = []
+    for tile in tiles:
+        if 'row' in tile and 'col' in tile:
+            validated_tiles.append({'row': int(tile['row']), 'col': int(tile['col'])})
+        else:
+            print(f"Warning: Skipping invalid tile (missing row or col): {tile}")
+    
+    if len(validated_tiles) == 0:
+        return "Error: No valid tiles provided. Each tile must have both 'row' and 'col' keys."
+    
+    # Return the validated tiles as a string repr so the agent loop can capture it in the ToolMessage
+    return str(validated_tiles)
 
 class PythonQueryInput(BaseModel):
-    code: str = Field(..., description="Python pandas code to execute. Variable 'df' is available. Must assign result to variable 'result_rows' as a list of dicts [{'row':..., 'col':...}].")
+    code: str = Field(..., description="Python pandas code to execute. Variable 'df' is available. Must assign result to variable 'result_rows' as a list of dicts with BOTH 'row' AND 'col' keys: [{'row':..., 'col':...}].")
 
 @tool("query_data")
 def query_data(code: str):
     """
     Executes Python code to query the 'df' pandas DataFrame. 
-    The dataframe 'df' has columns like: 'row', 'col', 'depth_m', 'biome', 'life_species' (list as string).
+    The dataframe 'df' has columns like: 'row', 'col', 'depth_m', 'biome', 'resource_economic_value', etc.
     
-    You MUST assign the final result to a variable named 'result_rows'.
-    'result_rows' must be a list of dictionaries, e.g. [{'row': 1, 'col': 2}].
+    CRITICAL: You MUST assign the final result to a variable named 'result_rows'.
+    'result_rows' MUST be a list of dictionaries with BOTH 'row' AND 'col' keys.
+    Example: [{'row': 1, 'col': 2}, {'row': 3, 'col': 4}]
+    
+    ALWAYS select BOTH 'row' AND 'col' columns in your result.
     
     Example code:
-    top_10 = df.head(10)
-    result_rows = top_10[['row', 'col']].to_dict('records')
+    # Calculate total economic value
+    df['total_econ'] = df['resource_economic_value'].apply(lambda x: sum(x) if len(x) > 0 else 0)
+    # Get top 5
+    top_5 = df.nlargest(5, 'total_econ')
+    # MUST include both row and col
+    result_rows = top_5[['row', 'col']].to_dict('records')
     """
     local_vars = {'df': DF}
     print(code)
