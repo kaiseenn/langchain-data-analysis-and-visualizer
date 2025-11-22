@@ -136,7 +136,8 @@ IMPORTANT NOTES:
 - Use pandas operations to filter, sort, and analyze the data
 - When user asks to "find" or "show" tiles, use query_and_highlight (it auto-highlights)
 - When user asks "how many" or wants statistics, use query_data (no highlighting)
-- Economic value is stored in resource_economic_value as a list of values"""
+- Economic value is stored in resource_economic_value as a list of values
+- IF you are asked to search for something, and you are returned a empty result, then YOU MUST make a query_data  tool call to get all the unique values for a column to find the correct key. CAUTION: Do not do this for the columns that do not contain string or list values. After this, return your response to the user."""
 
     agent = create_agent(
         model=model,
@@ -241,11 +242,6 @@ async def generate_response(user_message: str) -> AsyncGenerator[str, None]:
                 if msg_type == "text" and node == "model":
                     yield json.dumps({"type": "text", "content": message["text"]}) + "\n"
                     
-                elif msg_type == "tool_call":
-                    tool_name = message.get("name", "unknown")
-                    # Show tool execution to user
-                    yield json.dumps({"type": "text", "content": f"[Executing {tool_name}...]"}) + "\n"
-                
                 elif msg_type == "text" and node == "tools":
                     # Tool outputs come as text messages from the tools node
                     content = message.get("text", "")
@@ -261,64 +257,11 @@ async def generate_response(user_message: str) -> AsyncGenerator[str, None]:
                             if isinstance(tiles, list) and len(tiles) > 0:
                                 # Send highlight command to frontend
                                 yield json.dumps({"type": "highlight", "tiles": tiles}) + "\n"
-                                # Send success message
-                                yield json.dumps({"type": "text", "content": f"✓ Highlighted {len(tiles)} tiles"}) + "\n"
-                            else:
-                                yield json.dumps({"type": "text", "content": "⚠ No tiles to highlight"}) + "\n"
+
                         except Exception as e:
                             yield json.dumps({"type": "text", "content": f"⚠ Highlight error: {str(e)}"}) + "\n"
-                    
-                    # Show SUCCESS/ERROR messages from tools
-                    elif isinstance(content, str) and (content.startswith("SUCCESS:") or content.startswith("ERROR:")):
-                        yield json.dumps({"type": "text", "content": content}) + "\n"
-                    
-                    # For query_data tool (just show the result)
-                    elif content and not content.startswith("ERROR:") and not content.startswith("HIGHLIGHT:"):
-                        yield json.dumps({"type": "text", "content": f"📊 {content}"}) + "\n"
-                    
-                elif msg_type == "tool_output":
-                    # Handle tool outputs
-                    tool_name = message.get("name", "")
-                    content = message.get("content", "")
-                    
-                    # Check if this is a query_and_highlight result with HIGHLIGHT: prefix
-                    if isinstance(content, str) and content.startswith("HIGHLIGHT:"):
-                        try:
-                            # Extract the tiles list from "HIGHLIGHT:[{...}, {...}]"
-                            tiles_str = content[10:]  # Remove "HIGHLIGHT:" prefix
-                            tiles = ast.literal_eval(tiles_str)
-                            
-                            if isinstance(tiles, list) and len(tiles) > 0:
-                                # Send highlight command to frontend
-                                yield json.dumps({"type": "highlight", "tiles": tiles}) + "\n"
-                                # Send success message
-                                yield json.dumps({"type": "text", "content": f"✓ Highlighted {len(tiles)} tiles"}) + "\n"
-                            else:
-                                yield json.dumps({"type": "text", "content": "⚠ No tiles to highlight"}) + "\n"
-                        except Exception as e:
-                            yield json.dumps({"type": "text", "content": f"⚠ Highlight error: {str(e)}"}) + "\n"
-                    
-                    # Show SUCCESS/ERROR messages from tools
-                    elif isinstance(content, str) and (content.startswith("SUCCESS:") or content.startswith("ERROR:")):
-                        yield json.dumps({"type": "text", "content": content}) + "\n"
-                    
-                    # For highlight_tiles tool (manual highlighting)
-                    elif tool_name == "highlight_tiles":
-                        try:
-                            tiles = ast.literal_eval(content) if isinstance(content, str) else content
-                            if isinstance(tiles, list) and len(tiles) > 0:
-                                yield json.dumps({"type": "highlight", "tiles": tiles}) + "\n"
-                                yield json.dumps({"type": "text", "content": f"✓ Highlighted {len(tiles)} tiles"}) + "\n"
-                        except Exception as e:
-                            yield json.dumps({"type": "text", "content": f"⚠ Highlight error: {str(e)}"}) + "\n"
-                    
-                    # For query_data tool (just show the result)
-                    elif tool_name == "query_data":
-                        if content and not content.startswith("ERROR:"):
-                            yield json.dumps({"type": "text", "content": f"📊 {content}"}) + "\n"
-                        elif content.startswith("ERROR:"):
-                            yield json.dumps({"type": "text", "content": content}) + "\n"
-                            
+                
+                       
     except Exception as e:
         yield json.dumps({"type": "text", "content": f"Error: {str(e)}"}) + "\n"
 
