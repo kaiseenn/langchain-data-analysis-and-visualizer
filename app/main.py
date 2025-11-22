@@ -34,7 +34,6 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# --- AGENT SETUP ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GOOGLE_API_KEY:
@@ -291,7 +290,6 @@ async def generate_response(user_message: str) -> AsyncGenerator[str, None]:
                             
                             if isinstance(tiles, list) and len(tiles) > 0:
                                 # Send highlight command to frontend
-                                print("called")
                                 yield json.dumps({"type": "highlight", "tiles": tiles}) + "\n"
                                 # Send success message
                                 yield json.dumps({"type": "text", "content": f"✓ Highlighted {len(tiles)} tiles"}) + "\n"
@@ -336,8 +334,3 @@ async def chat(request: ChatRequest):
         media_type="application/x-ndjson"
     )
 
-@app.post("/api/clear")
-async def clear_conversation():
-    global thread_id
-    thread_id += 1
-    return {"status": "cleared"}

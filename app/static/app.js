@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function initDeckGL(processedData) {
         deckglInstance = new DeckGL({
             container: 'map-container',
-            mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json', // MapLibre style
+            // Remove mapStyle to disable base map
             initialViewState: {
                 longitude: 145.8,
                 latitude: -12.45,
@@ -441,9 +441,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return val.length > 0 ? val.join(', ') : 'None';
             }
             if (typeof val === 'number') {
-                if (key.includes('lat') || key.includes('lon')) return val.toFixed(4);
-                if (key.includes('depth') || key.includes('pressure') || key.includes('temp')) return val.toFixed(2);
-                return val;
+                // Max 8 significant figures
+                return parseFloat(val.toPrecision(8));
             }
             return val;
         };

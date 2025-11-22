@@ -5,336 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abyssal World Map 3D</title>
     
-    <!-- MapLibre GL CSS -->
-    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <style>
-        :root {
-            --deep-blue: #0a192f;
-            --ocean-blue: #112240;
-            --text-primary: #ccd6f6;
-            --text-secondary: #8892b0;
-            --accent-cyan: #64ffda;
-            --hazard-red: #ff6b6b;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            background-color: var(--deep-blue);
-            color: var(--text-primary);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #sidebar {
-            width: 350px;
-            background-color: var(--ocean-blue);
-            padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            position: relative;
-            overflow-y: auto;
-        }
-
-        #map-container {
-            flex-grow: 1;
-            position: relative;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-        }
-
-        /* Tooltip */
-        .deck-tooltip {
-            font-family: 'Inter', sans-serif !important;
-            font-size: 0.8rem !important;
-            background: rgba(17, 34, 64, 0.9) !important;
-            color: var(--text-primary) !important;
-            border: 1px solid var(--accent-cyan) !important;
-            padding: 8px !important;
-            border-radius: 4px !important;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            color: var(--accent-cyan);
-            margin-top: 0;
-            margin-bottom: 20px;
-            border-bottom: 1px solid var(--text-secondary);
-            padding-bottom: 10px;
-        }
-
-        h2 {
-            font-size: 1.2rem;
-            color: var(--text-primary);
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        .stat-box {
-            background: rgba(10, 25, 47, 0.5);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--text-secondary);
-            margin-bottom: 15px;
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-        }
-
-        .stat-value {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        /* Search Form */
-        .search-form {
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--text-secondary);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .search-input {
-            background: rgba(10, 25, 47, 0.5);
-            border: 1px solid var(--text-secondary);
-            color: var(--text-primary);
-            padding: 8px;
-            border-radius: 4px;
-            width: 60px;
-            font-family: inherit;
-        }
-
-        .search-btn {
-            background: transparent;
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-            font-weight: 600;
-        }
-
-        .search-btn:hover {
-            background: rgba(100, 255, 218, 0.1);
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            margin-right: 5px;
-            margin-bottom: 5px;
-            background: rgba(100, 255, 218, 0.1);
-            color: var(--accent-cyan);
-            border: 1px solid var(--accent-cyan);
-        }
-
-        .tag.hazard {
-            background: rgba(255, 107, 107, 0.1);
-            color: var(--hazard-red);
-            border-color: var(--hazard-red);
-        }
-        
-        .tag.life {
-            background: rgba(100, 200, 100, 0.1);
-            color: #64ff8f;
-            border-color: #64ff8f;
-        }
-
-        .controls {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid var(--text-secondary);
-        }
-        
-        .toggle-group {
-            margin-bottom: 15px;
-        }
-        
-        .toggle-btn {
-            background: transparent;
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            padding: 8px 16px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .toggle-btn.active {
-            background: var(--accent-cyan);
-            color: var(--deep-blue);
-        }
-        
-        .toggle-btn:first-child {
-            border-radius: 4px 0 0 4px;
-            border-right: none;
-        }
-        
-        .toggle-btn:last-child {
-            border-radius: 0 4px 4px 0;
-        }
-
-        .instruction {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 10px;
-            font-style: italic;
-        }
-
-        /* Chat Widget */
-        #chat-widget {
-            position: fixed;
-            bottom: 20px;
-            left: calc(350px + (100vw - 350px) / 2);
-            transform: translateX(-50%);
-            width: 700px;
-            max-width: calc(100vw - 400px);
-            height: 200px;
-            background-color: rgba(17, 34, 64, 0.95);
-            border: 1px solid var(--accent-cyan);
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            z-index: 2000;
-            font-size: 0.9rem;
-            backdrop-filter: blur(10px);
-        }
-
-        #chat-messages {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .message {
-            padding: 8px 12px;
-            border-radius: 8px;
-            max-width: 80%;
-            line-height: 1.4;
-            align-self: center;
-            text-align: center;
-        }
-
-        .message.user {
-            background-color: rgba(100, 255, 218, 0.2);
-            color: var(--text-primary);
-        }
-
-        .message.bot {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: var(--text-primary);
-        }
-
-        #chat-input-area {
-            padding: 10px;
-            border-top: 1px solid var(--text-secondary);
-            display: flex;
-            gap: 10px;
-        }
-
-        #chat-input {
-            flex-grow: 1;
-            background: rgba(10, 25, 47, 0.5);
-            border: 1px solid var(--text-secondary);
-            color: var(--text-primary);
-            padding: 8px;
-            border-radius: 4px;
-            font-family: inherit;
-        }
-
-        #chat-send {
-            background: var(--accent-cyan);
-            color: var(--deep-blue);
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .highlight-msg {
-            font-size: 0.8rem;
-            color: #ffd700;
-            font-style: italic;
-            margin-top: 2px;
-        }
-    </style>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
 
-    <div id="sidebar">
-        <h1>Abyssal 3D View</h1>
+    <div id="map-container">
+        <!-- Map canvas will be injected here by DeckGL -->
+    </div>
+
+    <div id="sidebar" class="glass-panel">
         
         <div class="toggle-group">
             <button class="toggle-btn active" id="btn-biome">Biome View</button>
             <button class="toggle-btn" id="btn-score">Mining Score</button>
         </div>
         
-        <button id="clear-highlights-btn" class="search-btn" style="width: 100%; margin-top: 10px; background: var(--hazard-red);">Clear Highlights</button>
+        <button id="clear-highlights-btn" class="action-btn danger">Clear Highlights</button>
 
-        <div id="cell-info">
-            <p class="stat-label">Hover over a cell to view details.</p>
-            <p class="stat-label">Click to lock details in sidebar.</p>
+        <div id="cell-info" style="margin-top: 20px;">
+            <div class="stat-box">
+                <p class="stat-label" style="text-align: center; margin: 0;">Hover over a cell to view details.<br>Click to lock details.</p>
+            </div>
         </div>
         
-        <div class="controls">
-            <p class="instruction">
-                Controls:<br>
-                - Left Click + Drag to Rotate<br>
-                - Right Click + Drag to Pan<br>
-                - Scroll to Zoom
-            </p>
+        <div class="controls" style="margin-top: auto; padding-top: 20px;">
+            <div class="instruction">
+                <strong>Controls:</strong><br>
+                • Left Click + Drag to Rotate<br>
+                • Right Click + Drag to Pan<br>
+                • Scroll to Zoom
+            </div>
         </div>
-    </div>
-
-    <div id="map-container">
-        <!-- Map canvas will be injected here by DeckGL -->
     </div>
 
     <!-- Chat Widget -->
-    <div id="chat-widget">
+    <div id="chat-widget" class="glass-panel">
         <div id="chat-messages">
             <div class="message bot">Hello! I can help you explore the map. Try asking "Highlight the top 5 richest tiles".</div>
         </div>
         <div id="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Ask a query..." autocomplete="off">
+            <input type="text" id="chat-input" placeholder="Ask the AI assistant..." autocomplete="off">
             <button id="chat-send">Send</button>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <script src="https://unpkg.com/deck.gl@8.9.33/dist.min.js"></script>
     <script src="/static/app.js"></script>
 </body>
