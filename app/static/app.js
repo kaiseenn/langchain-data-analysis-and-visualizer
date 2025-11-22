@@ -123,15 +123,41 @@ document.addEventListener('DOMContentLoaded', () => {
             elevationScale: Z_SCALE,
             getPosition: d => [d.lon, d.lat],
             getFillColor: d => getCellColor(d),
-            getElevation: d => d.elevation,
-            getLineColor: d => (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) ? [255, 215, 0] : [0, 0, 0],
-            getLineWidth: d => (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) ? 20 : 0,
+            getElevation: d => {
+                // Max height for highlighted tiles
+                if (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) {
+                    return MAX_DEPTH; // Maximum elevation
+                }
+                if (isHighlighted(d)) {
+                    return MAX_DEPTH; // Maximum elevation
+                }
+                return d.elevation;
+            },
+            getLineColor: d => {
+                if (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) {
+                    return [0, 255, 0]; // Bright green outline
+                }
+                if (isHighlighted(d)) {
+                    return [0, 255, 0]; // Bright green outline
+                }
+                return [0, 0, 0];
+            },
+            getLineWidth: d => {
+                if (selectedCell && d.row === selectedCell.row && d.col === selectedCell.col) {
+                    return 20;
+                }
+                if (isHighlighted(d)) {
+                    return 20;
+                }
+                return 0;
+            },
             lineWidthMinPixels: 0,
             
             updateTriggers: {
                 getFillColor: [currentViewMode, selectedCell, highlightedCells],
-                getLineWidth: [selectedCell],
-                getLineColor: [selectedCell]
+                getElevation: [selectedCell, highlightedCells],
+                getLineWidth: [selectedCell, highlightedCells],
+                getLineColor: [selectedCell, highlightedCells]
             },
 
             autoHighlight: true,
@@ -160,11 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 1. User Selection Priority
         if (selectedCell) {
             if (d.row === selectedCell.row && d.col === selectedCell.col) {
-                return [255, 215, 0, 255]; // Opaque Gold
+                return [0, 255, 0, 255]; // Bright Green
             }
             // If we have highlights active, check those too
             if (isHighlighted(d)) {
-                return [255, 215, 0, 255]; // Also Gold
+                return [0, 255, 0, 255]; // Bright Green
             }
             // Otherwise dim
             const baseColor = currentViewMode === 'biome' 
@@ -176,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2. AI Highlight Priority (No user selection)
         if (highlightedCells.length > 0) {
             if (isHighlighted(d)) {
-                return [255, 215, 0, 255]; // Gold
+                return [0, 255, 0, 255]; // Bright Green
             }
             // Dim non-highlighted
             const baseColor = currentViewMode === 'biome' 
@@ -283,22 +309,41 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('search-btn');
         const rowInput = document.getElementById('row-input');
         const colInput = document.getElementById('col-input');
+        const clearBtn = document.getElementById('clear-highlights-btn');
 
-        const doSearch = () => {
-            const r = parseInt(rowInput.value);
-            const c = parseInt(colInput.value);
-            
+        // Keep the search functionality available even if UI elements are removed
+        const doSearch = (r, c) => {
             if (isNaN(r) || isNaN(c)) return;
 
             const found = allData.find(d => d.row === r && d.col === c);
             if (found) {
                 selectTile(found);
             } else {
-                alert('Cell not found within grid range.');
+                console.warn('Cell not found within grid range.');
             }
         };
 
-        btn.addEventListener('click', doSearch);
+        // Only attach event listeners if elements exist
+        if (btn && rowInput && colInput) {
+            btn.addEventListener('click', () => {
+                const r = parseInt(rowInput.value);
+                const c = parseInt(colInput.value);
+                doSearch(r, c);
+            });
+        }
+        
+        // Clear highlights button
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                selectedCell = null;
+                highlightedCells = [];
+                infoDiv.innerHTML = '<p class="stat-label">Hover over a cell to view details.</p>';
+                updateLayer(allData);
+            });
+        }
+        
+        // Make doSearch available globally for programmatic use
+        window.searchTile = doSearch;
     }
 
     function setupChat() {

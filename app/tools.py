@@ -37,6 +37,7 @@ def query_data(code: str):
     result_rows = top_10[['row', 'col']].to_dict('records')
     """
     local_vars = {'df': DF}
+    print(code)
     try:
         exec(code, {}, local_vars)
         if 'result_rows' in local_vars:

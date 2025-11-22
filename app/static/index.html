@@ -212,11 +212,11 @@
         #chat-widget {
             position: fixed;
             bottom: 20px;
-            left: 50%;
+            left: calc(350px + (100vw - 350px) / 2);
             transform: translateX(-50%);
-            width: 600px;
-            max-width: 90vw;
-            height: 400px;
+            width: 700px;
+            max-width: calc(100vw - 400px);
+            height: 200px;
             background-color: rgba(17, 34, 64, 0.95);
             border: 1px solid var(--accent-cyan);
             border-radius: 8px;
@@ -301,11 +301,7 @@
             <button class="toggle-btn" id="btn-score">Mining Score</button>
         </div>
         
-        <div class="search-form">
-            <input type="number" id="row-input" class="search-input" placeholder="Row" min="0" max="49">
-            <input type="number" id="col-input" class="search-input" placeholder="Col" min="0" max="49">
-            <button id="search-btn" class="search-btn">Go</button>
-        </div>
+        <button id="clear-highlights-btn" class="search-btn" style="width: 100%; margin-top: 10px; background: var(--hazard-red);">Clear Highlights</button>
 
         <div id="cell-info">
             <p class="stat-label">Hover over a cell to view details.</p>
