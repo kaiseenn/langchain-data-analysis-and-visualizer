@@ -7,7 +7,12 @@ import csv
 import json
 import os
 import ast
+import sys
 from typing import AsyncGenerator
+
+# Add project root to python path so we can import 'app' module when running directly
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app.optimizer import AbyssalOptimizer
 
 # LangChain imports
@@ -250,12 +255,10 @@ async def generate_response(user_message: str) -> AsyncGenerator[str, None]:
                     # Check if this is a query_and_highlight result with HIGHLIGHT: prefix
                     if isinstance(content, str) and content.startswith("HIGHLIGHT:"):
                         try:
-                            # Extract the tiles list from "HIGHLIGHT:[{...}, {...}]"
                             tiles_str = content[10:]  # Remove "HIGHLIGHT:" prefix
                             tiles = ast.literal_eval(tiles_str)
                             
                             if isinstance(tiles, list) and len(tiles) > 0:
-                                # Send highlight command to frontend
                                 yield json.dumps({"type": "highlight", "tiles": tiles}) + "\n"
 
                         except Exception as e:
@@ -276,4 +279,8 @@ async def chat(request: ChatRequest):
         generate_response(request.message),
         media_type="application/x-ndjson"
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
 

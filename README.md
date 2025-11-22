@@ -28,34 +28,20 @@ The application is powered by **`merged.csv`**, a consolidated dataset containin
 
 ## Installation & Setup
 
-### 1. Prerequisites
-Ensure you have Python 3.8+ installed.
-
-### 2. Install Dependencies
 Install the required Python packages:
 
 ```bash
-pip install fastapi uvicorn
+pip install -r requirements.txt
 ```
-
-*(Note: The application uses standard libraries like `csv`, `json`, and `math` for data processing, so no heavy data science libraries like Pandas are required.)*
 
 ### 3. Run the Application
 Start the local server using `uvicorn`:
 
 ```bash
-uvicorn app.main:app --reload
+fastapi run
 ```
 
 ### 4. Access the Map
 Open your web browser and navigate to:
 
 **http://127.0.0.1:8000**
-
-## Usage
-
-*   **Rotate/Pan:** Left-click + drag to rotate. Right-click + drag to pan. Scroll to zoom.
-*   **Toggle Views:** Use the sidebar buttons to switch between "Biome View" and "Mining Score".
-*   **Inspect Cells:** Hover over any cell to see live data. Click a cell to lock the sidebar details.
-*   **Search:** Enter Row/Col coordinates in the sidebar to locate specific grid cells.
-
