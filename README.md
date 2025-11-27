@@ -1,4 +1,4 @@
-# Abyssal Mining Optimizer & 3D Map
+# Abyssal Mining Optimizer & 3D Topographic Map
 
 This project provides a web-based 3D visualization and optimization tool for deep-sea mining exploration. It processes geospatial data to identify optimal mining locations based on resource value, extraction difficulty, and environmental impact, while highlighting endangered species to ensure conservation.
 
